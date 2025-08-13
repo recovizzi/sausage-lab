@@ -1,0 +1,7 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+/* You can place any global resets/utilities below if needed */
+html, body, #root {
+  height: 100%;
+}
