@@ -54,7 +54,7 @@ export default function SausageScene({ paused, timeScale, bounceBoost, sunAzimut
     bg.position.set(0, 25, -60)
     scene.add(bg)
 
-    const sausage = createSausage()
+    const { group: sausage, leftSegment, rightSegment } = createSausage()
     sausage.position.set(0, 1.0, 0)
     sausage.castShadow = true
     worldGroup.add(sausage)
@@ -73,6 +73,7 @@ export default function SausageScene({ paused, timeScale, bounceBoost, sunAzimut
 
     // physics
     const radius = 0.35
+    const bodyLen = 2.2
     let x = 0
     let y = 1.0
     let vx = 0
@@ -83,11 +84,16 @@ export default function SausageScene({ paused, timeScale, bounceBoost, sunAzimut
     const EPS_VY = 0.02
     const EPS_VX = 0.02
     const EPS_POS = 0.005
-    const IMPULSE = 2.5
     let animating = true
 
     const raycaster = new THREE.Raycaster()
     const pointer = new THREE.Vector2()
+    let dragging = false
+    let dragAxis: 'x' | 'y' | null = null
+    const prevPoint = new THREE.Vector3()
+    let prevTime = 0
+    let bend = 0
+    let bendVel = 0
 
     function onPointerDown(e: PointerEvent) {
       const rect = renderer.domElement.getBoundingClientRect()
@@ -96,12 +102,47 @@ export default function SausageScene({ paused, timeScale, bounceBoost, sunAzimut
       raycaster.setFromCamera(pointer, camera)
       const hits = raycaster.intersectObject(sausage, true)
       if (hits.length) {
-        const hitX = hits[0].point.x
-        const dir = hitX < sausage.position.x ? -1 : 1
-        vx = dir * IMPULSE
+        const local = sausage.worldToLocal(hits[0].point.clone())
+        dragAxis = Math.abs(local.x) > bodyLen * 0.25 ? 'y' : 'x'
+        dragging = true
+        prevPoint.copy(hits[0].point)
+        prevTime = performance.now()
         animating = true
+        renderer.domElement.addEventListener('pointermove', onPointerMove)
+        renderer.domElement.addEventListener('pointerup', onPointerUp)
       }
     }
+
+    function onPointerMove(e: PointerEvent) {
+      if (!dragging) return
+      const rect = renderer.domElement.getBoundingClientRect()
+      pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
+      pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
+      raycaster.setFromCamera(pointer, camera)
+      const plane = dragAxis === 'y'
+        ? new THREE.Plane(new THREE.Vector3(0, 0, 1), 0)
+        : new THREE.Plane(new THREE.Vector3(0, 1, 0), -y)
+      const pt = new THREE.Vector3()
+      raycaster.ray.intersectPlane(plane, pt)
+      const now = performance.now()
+      const dt = Math.max((now - prevTime) / 1000, 0.001)
+      if (dragAxis === 'y') {
+        vy = (pt.y - prevPoint.y) / dt
+        y = Math.max(pt.y, radius)
+      } else if (dragAxis === 'x') {
+        vx = (pt.x - prevPoint.x) / dt
+        x = pt.x
+      }
+      prevPoint.copy(pt)
+      prevTime = now
+    }
+
+    function onPointerUp() {
+      dragging = false
+      renderer.domElement.removeEventListener('pointermove', onPointerMove)
+      renderer.domElement.removeEventListener('pointerup', onPointerUp)
+    }
+
     renderer.domElement.addEventListener('pointerdown', onPointerDown)
 
     const clock = new THREE.Clock()
@@ -141,6 +182,13 @@ export default function SausageScene({ paused, timeScale, bounceBoost, sunAzimut
         const squash = THREE.MathUtils.clamp(1 - compression - vel * 0.01, 0.82, 1.08)
         sausage.scale.set(1 / squash, squash, 1 / squash)
 
+        const targetBend = THREE.MathUtils.clamp(vx * 0.05, -0.4, 0.4)
+        bendVel += (targetBend - bend) * 0.1
+        bendVel *= 0.92
+        bend += bendVel
+        leftSegment.rotation.z = bend
+        rightSegment.rotation.z = -bend
+
         if (Math.abs(vy) < EPS_VY && Math.abs(y - floorY) < EPS_POS && Math.abs(vx) < EPS_VX) {
           vy = 0
           vx = 0
@@ -151,7 +199,7 @@ export default function SausageScene({ paused, timeScale, bounceBoost, sunAzimut
 
       const az = THREE.MathUtils.degToRad(camAzRef.current)
       const el = THREE.MathUtils.clamp(THREE.MathUtils.degToRad(camElRef.current), 0.087, Math.PI - 0.087)
-      const r = THREE.MathUtils.clamp(camRadRef.current, 2, 12)
+      const r = THREE.MathUtils.clamp(camRadRef.current, 4, 20)
       camera.position.set(
         r * Math.sin(el) * Math.cos(az),
         r * Math.cos(el),

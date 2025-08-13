@@ -9,7 +9,7 @@ export default function App() {
   const [sunAzimuth, setSunAzimuth] = useState(35)
   const [sunElevation, setSunElevation] = useState(40)
   const [camAzimuth, setCamAzimuth] = useState(30)
-  const [camElevation, setCamElevation] = useState(30)
+  const [camElevation, setCamElevation] = useState(70)
   const [camRadius, setCamRadius] = useState(6)
 
   return (
@@ -42,7 +42,7 @@ export default function App() {
         cameraRadius={camRadius}
         setCameraRadius={setCamRadius}
       />
-      <div className="pointer-events-none fixed top-2 right-2 text-xl font-bold opacity-30 select-none">
+      <div className="pointer-events-none fixed top-2 right-2 select-none text-2xl font-bold text-[#C46A4A] opacity-30 font-[cursive]">
         Saucisse Labs
       </div>
     </div>

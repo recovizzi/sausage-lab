@@ -57,7 +57,7 @@ export default function ControlsOverlay(props: Props) {
         </div>
         <div>
           <div className="text-xs opacity-70 mb-1">Camera zoom: {props.cameraRadius.toFixed(1)}</div>
-          <input type="range" min={2} max={12} step={0.1} value={props.cameraRadius}
+          <input type="range" min={4} max={20} step={0.1} value={props.cameraRadius}
             onChange={(e) => props.setCameraRadius(parseFloat(e.currentTarget.value))}
             className="range range-xs" />
         </div>
