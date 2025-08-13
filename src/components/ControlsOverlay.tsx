@@ -9,6 +9,12 @@ type Props = {
   setSunAzimuth: (v: number) => void
   sunElevation: number
   setSunElevation: (v: number) => void
+  cameraAzimuth: number
+  setCameraAzimuth: (v: number) => void
+  cameraElevation: number
+  setCameraElevation: (v: number) => void
+  cameraRadius: number
+  setCameraRadius: (v: number) => void
 }
 
 export default function ControlsOverlay(props: Props) {
@@ -29,18 +35,39 @@ export default function ControlsOverlay(props: Props) {
             className="range range-xs" />
         </div>
 
+      <div>
+        <div className="text-xs opacity-70 mb-1">Bounce boost (initial velocity): {props.bounceBoost.toFixed(1)}</div>
+        <input type="range" min={2} max={10} step={0.5} value={props.bounceBoost}
+          onChange={(e) => props.setBounceBoost(parseFloat(e.currentTarget.value))}
+          className="range range-xs" />
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
         <div>
-          <div className="text-xs opacity-70 mb-1">Bounce boost (initial velocity): {props.bounceBoost.toFixed(1)}</div>
-          <input type="range" min={2} max={10} step={0.5} value={props.bounceBoost}
-            onChange={(e) => props.setBounceBoost(parseFloat(e.currentTarget.value))}
+          <div className="text-xs opacity-70 mb-1">Camera azimuth: {props.cameraAzimuth.toFixed(0)}°</div>
+          <input type="range" min={0} max={360} step={1} value={props.cameraAzimuth}
+            onChange={(e) => props.setCameraAzimuth(parseFloat(e.currentTarget.value))}
             className="range range-xs" />
         </div>
+        <div>
+          <div className="text-xs opacity-70 mb-1">Camera elevation: {props.cameraElevation.toFixed(0)}°</div>
+          <input type="range" min={0} max={180} step={1} value={props.cameraElevation}
+            onChange={(e) => props.setCameraElevation(parseFloat(e.currentTarget.value))}
+            className="range range-xs" />
+        </div>
+        <div>
+          <div className="text-xs opacity-70 mb-1">Camera zoom: {props.cameraRadius.toFixed(1)}</div>
+          <input type="range" min={2} max={12} step={0.1} value={props.cameraRadius}
+            onChange={(e) => props.setCameraRadius(parseFloat(e.currentTarget.value))}
+            className="range range-xs" />
+        </div>
+      </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <div className="text-xs opacity-70 mb-1">Sun azimuth: {props.sunAzimuth.toFixed(0)}°</div>
-            <input type="range" min={-180} max={180} step={1} value={props.sunAzimuth}
-              onChange={(e) => props.setSunAzimuth(parseFloat(e.currentTarget.value))}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <div className="text-xs opacity-70 mb-1">Sun azimuth: {props.sunAzimuth.toFixed(0)}°</div>
+          <input type="range" min={-180} max={180} step={1} value={props.sunAzimuth}
+            onChange={(e) => props.setSunAzimuth(parseFloat(e.currentTarget.value))}
               className="range range-xs" />
           </div>
           <div>
@@ -50,10 +77,6 @@ export default function ControlsOverlay(props: Props) {
               className="range range-xs" />
           </div>
         </div>
-      </div>
-
-      <div className="mt-3 text-[11px] opacity-70">
-        Drag <strong>horizontally</strong> to tilt the scene around the X axis.
       </div>
     </div>
   )

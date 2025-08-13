@@ -3,7 +3,6 @@ import * as THREE from 'three'
 import { createRenderer } from '@/three/createRenderer'
 import { createScene } from '@/three/createScene'
 import { createSausage } from '@/three/createSausage'
-import { setupInputDragX } from '@/three/inputDragX'
 import kitchenURL from '@/assets/kitchen-blur.jpg'
 
 type Props = {
@@ -12,17 +11,27 @@ type Props = {
   bounceBoost: number
   sunAzimuth: number
   sunElevation: number
+  cameraAzimuth: number
+  cameraElevation: number
+  cameraRadius: number
 }
 
-export default function SausageScene({ paused, timeScale, bounceBoost, sunAzimuth, sunElevation }: Props) {
+export default function SausageScene({ paused, timeScale, bounceBoost, sunAzimuth, sunElevation, cameraAzimuth, cameraElevation, cameraRadius }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null)
+  const camAzRef = useRef(cameraAzimuth)
+  const camElRef = useRef(cameraElevation)
+  const camRadRef = useRef(cameraRadius)
+
+  useEffect(() => { camAzRef.current = cameraAzimuth }, [cameraAzimuth])
+  useEffect(() => { camElRef.current = cameraElevation }, [cameraElevation])
+  useEffect(() => { camRadRef.current = cameraRadius }, [cameraRadius])
 
   useEffect(() => {
     if (!containerRef.current) return
 
     const container = containerRef.current
-    const width = container.clientWidth
-    const height = container.clientHeight
+    let width = container.clientWidth
+    let height = container.clientHeight
 
     const renderer = createRenderer()
     renderer.setSize(width, height)
@@ -52,24 +61,48 @@ export default function SausageScene({ paused, timeScale, bounceBoost, sunAzimut
 
     ground.receiveShadow = true
 
-    const cleanupDrag = setupInputDragX(container, worldGroup, true)
-
     const handleResize = () => {
-      const w = container.clientWidth
-      const h = container.clientHeight
-      camera.aspect = w / h
+      width = container.clientWidth
+      height = container.clientHeight
+      camera.aspect = width / height
       camera.updateProjectionMatrix()
-      renderer.setSize(w, h)
+      renderer.setSize(width, height)
     }
     const ro = new ResizeObserver(handleResize)
     ro.observe(container)
 
     // physics
     const radius = 0.35
+    let x = 0
     let y = 1.0
+    let vx = 0
     let vy = bounceBoost
-    const g = -9.8
-    const restitution = 0.72
+    const G = -9.8
+    const RESTITUTION = 0.72
+    const DAMPING_X = 0.995
+    const EPS_VY = 0.02
+    const EPS_VX = 0.02
+    const EPS_POS = 0.005
+    const IMPULSE = 2.5
+    let animating = true
+
+    const raycaster = new THREE.Raycaster()
+    const pointer = new THREE.Vector2()
+
+    function onPointerDown(e: PointerEvent) {
+      const rect = renderer.domElement.getBoundingClientRect()
+      pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
+      pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
+      raycaster.setFromCamera(pointer, camera)
+      const hits = raycaster.intersectObject(sausage, true)
+      if (hits.length) {
+        const hitX = hits[0].point.x
+        const dir = hitX < sausage.position.x ? -1 : 1
+        vx = dir * IMPULSE
+        animating = true
+      }
+    }
+    renderer.domElement.addEventListener('pointerdown', onPointerDown)
 
     const clock = new THREE.Clock()
     let raf = 0
@@ -89,23 +122,42 @@ export default function SausageScene({ paused, timeScale, bounceBoost, sunAzimut
 
     const tick = () => {
       const dt = Math.min(clock.getDelta() * timeScale, 0.05)
-      if (!paused) {
-        vy += g * dt
+      if (!paused && animating) {
+        vx *= DAMPING_X
+        vy += G * dt
+        x += vx * dt
         y += vy * dt
 
         const floorY = 0 + radius * 0.98
         if (y < floorY) {
           y = floorY
-          vy = Math.abs(vy) * restitution
+          vy = -vy * RESTITUTION
         }
 
-        sausage.position.y = y
+        sausage.position.set(x, y, 0)
 
         const compression = Math.max(0, (floorY + 0.02) - y) * 6
         const vel = Math.abs(vy)
         const squash = THREE.MathUtils.clamp(1 - compression - vel * 0.01, 0.82, 1.08)
         sausage.scale.set(1 / squash, squash, 1 / squash)
+
+        if (Math.abs(vy) < EPS_VY && Math.abs(y - floorY) < EPS_POS && Math.abs(vx) < EPS_VX) {
+          vy = 0
+          vx = 0
+          y = floorY
+          animating = false
+        }
       }
+
+      const az = THREE.MathUtils.degToRad(camAzRef.current)
+      const el = THREE.MathUtils.clamp(THREE.MathUtils.degToRad(camElRef.current), 0.087, Math.PI - 0.087)
+      const r = THREE.MathUtils.clamp(camRadRef.current, 2, 12)
+      camera.position.set(
+        r * Math.sin(el) * Math.cos(az),
+        r * Math.cos(el),
+        r * Math.sin(el) * Math.sin(az),
+      )
+      camera.lookAt(0, 0, 0)
 
       renderer.render(scene, camera)
       raf = requestAnimationFrame(tick)
@@ -114,7 +166,7 @@ export default function SausageScene({ paused, timeScale, bounceBoost, sunAzimut
 
     return () => {
       cancelAnimationFrame(raf)
-      cleanupDrag()
+      renderer.domElement.removeEventListener('pointerdown', onPointerDown)
       ro.disconnect()
       renderer.dispose()
 

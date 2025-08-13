@@ -27,7 +27,33 @@ export function createScene() {
   scene.add(dirLight.target)
 
   const groundGeo = new THREE.PlaneGeometry(200, 200)
-  const groundMat = new THREE.MeshStandardMaterial({ color: 0xFFD54F, roughness: 0.9, metalness: 0.0 })
+  const groundMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8, metalness: 0.2 })
+
+  const canvas = document.createElement('canvas')
+  canvas.width = canvas.height = 512
+  const ctx = canvas.getContext('2d')!
+  ctx.fillStyle = '#f5f5f5'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  ctx.strokeStyle = 'rgba(200,200,200,0.4)'
+  ctx.lineWidth = 8
+  for (let i = 0; i < 12; i++) {
+    ctx.beginPath()
+    ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height)
+    ctx.bezierCurveTo(
+      Math.random() * canvas.width,
+      Math.random() * canvas.height,
+      Math.random() * canvas.width,
+      Math.random() * canvas.height,
+      Math.random() * canvas.width,
+      Math.random() * canvas.height,
+    )
+    ctx.stroke()
+  }
+  const marbleTex = new THREE.CanvasTexture(canvas)
+  marbleTex.wrapS = marbleTex.wrapT = THREE.RepeatWrapping
+  marbleTex.repeat.set(4, 4)
+  groundMat.map = marbleTex
+
   const ground = new THREE.Mesh(groundGeo, groundMat)
   ground.rotation.x = -Math.PI / 2
   worldGroup.add(ground)
