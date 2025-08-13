@@ -13,6 +13,8 @@ type Props = {
   setCameraAzimuth: (v: number) => void
   cameraElevation: number
   setCameraElevation: (v: number) => void
+  cameraRadius: number
+  setCameraRadius: (v: number) => void
 }
 
 export default function ControlsOverlay(props: Props) {
@@ -40,7 +42,7 @@ export default function ControlsOverlay(props: Props) {
           className="range range-xs" />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <div>
           <div className="text-xs opacity-70 mb-1">Camera azimuth: {props.cameraAzimuth.toFixed(0)}°</div>
           <input type="range" min={0} max={360} step={1} value={props.cameraAzimuth}
@@ -51,6 +53,12 @@ export default function ControlsOverlay(props: Props) {
           <div className="text-xs opacity-70 mb-1">Camera elevation: {props.cameraElevation.toFixed(0)}°</div>
           <input type="range" min={0} max={180} step={1} value={props.cameraElevation}
             onChange={(e) => props.setCameraElevation(parseFloat(e.currentTarget.value))}
+            className="range range-xs" />
+        </div>
+        <div>
+          <div className="text-xs opacity-70 mb-1">Camera zoom: {props.cameraRadius.toFixed(1)}</div>
+          <input type="range" min={2} max={12} step={0.1} value={props.cameraRadius}
+            onChange={(e) => props.setCameraRadius(parseFloat(e.currentTarget.value))}
             className="range range-xs" />
         </div>
       </div>

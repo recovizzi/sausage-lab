@@ -13,15 +13,18 @@ type Props = {
   sunElevation: number
   cameraAzimuth: number
   cameraElevation: number
+  cameraRadius: number
 }
 
-export default function SausageScene({ paused, timeScale, bounceBoost, sunAzimuth, sunElevation, cameraAzimuth, cameraElevation }: Props) {
+export default function SausageScene({ paused, timeScale, bounceBoost, sunAzimuth, sunElevation, cameraAzimuth, cameraElevation, cameraRadius }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const camAzRef = useRef(cameraAzimuth)
   const camElRef = useRef(cameraElevation)
+  const camRadRef = useRef(cameraRadius)
 
   useEffect(() => { camAzRef.current = cameraAzimuth }, [cameraAzimuth])
   useEffect(() => { camElRef.current = cameraElevation }, [cameraElevation])
+  useEffect(() => { camRadRef.current = cameraRadius }, [cameraRadius])
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -148,7 +151,7 @@ export default function SausageScene({ paused, timeScale, bounceBoost, sunAzimut
 
       const az = THREE.MathUtils.degToRad(camAzRef.current)
       const el = THREE.MathUtils.clamp(THREE.MathUtils.degToRad(camElRef.current), 0.087, Math.PI - 0.087)
-      const r = 6
+      const r = THREE.MathUtils.clamp(camRadRef.current, 2, 12)
       camera.position.set(
         r * Math.sin(el) * Math.cos(az),
         r * Math.cos(el),
