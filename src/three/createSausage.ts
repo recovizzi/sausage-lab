@@ -8,7 +8,7 @@ export function createSausage() {
   const seg = 24
 
   // Capsule body
-  // @ts-ignore
+  // @ts-expect-error CapsuleGeometry lacks type in current Three.js typings
   const bodyGeo = new THREE.CapsuleGeometry(bodyRadius, bodyLength, seg, seg)
   const bodyMat = new THREE.MeshToonMaterial({ color: new THREE.Color('#C46A4A') })
   const body = new THREE.Mesh(bodyGeo, bodyMat)
