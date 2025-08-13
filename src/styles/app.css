@@ -1,7 +1,13 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
-/* You can place any global resets/utilities below if needed */
-html, body, #root {
-  height: 100%;
+html, body, #root { height: 100%; }
+body { margin: 0; }
+
+/* Overlay panel styling helpers */
+.overlay-panel {
+  @apply fixed top-4 right-4 z-50 w-[320px] max-w-[92vw] bg-base-100/80 backdrop-blur-md rounded-xl shadow border border-base-300;
+}
+.overlay-title {
+  @apply text-sm font-semibold opacity-80;
 }
